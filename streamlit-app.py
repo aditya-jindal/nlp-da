@@ -12,8 +12,6 @@ load_dotenv()
 # Initialize the LLM (Llama3 via ChatGroq)
 langchain_llm = ChatGroq(model="llama3-8b-8192")
 
-# Load and transcribe the audio file
-
 
 def load_and_transcribe(uploaded_file, save_to="transcription.txt"):
     # Write the uploaded file to a temporary file
@@ -35,8 +33,6 @@ def load_and_transcribe(uploaded_file, save_to="transcription.txt"):
 
     return transcribed_text
 
-# Extract topics from questions using the LLM
-
 
 def extract_topics_from_questions(questions_text, save_to: str = "topics.txt"):
     topic_extraction_prompt = PromptTemplate(
@@ -50,12 +46,13 @@ def extract_topics_from_questions(questions_text, save_to: str = "topics.txt"):
         llm=langchain_llm, prompt=topic_extraction_prompt)
     topics_response = topic_extraction_chain.run({"questions": questions_text})
 
-    topics_list = [topic.strip() for topic in topics_response.split(",")]
     # Split response into a list of topics
+    topics_list = [topic.strip() for topic in topics_response.split(",")]
+
     with open(save_to, "w") as f:
         f.write("\n".join(topics_list))
 
-    return topics_list
+    return "\n".join(topics_list)  # Return as newline-separated string
 
 
 # Prompts for analyzing transcription
@@ -70,16 +67,16 @@ topic_prompt = PromptTemplate(
 cheating_behavior_prompt = PromptTemplate(
     input_variables=["text"],
     template=(
-        "Analyze if this text suggests cheating behavior. Look for indications like someone spelling out mcq options "
-        "(example: 'a, b, c, d') or giving numerical choices(example: '1, 2, 3, 4'). Text: {text}"
+        "Analyze if this text contains out of context indications of someone spelling out mcq options "
+        "(example: 'a, b, c, d') or giving numerical choices(example: '1, 2, 3, 4'). "
+        "Provide your answer in the format: (Yes/No), followed by necessary justification. "
+        "Text: {text}"
     ),
 )
 
 # Define chains
 topic_chain = LLMChain(llm=langchain_llm, prompt=topic_prompt)
 cheating_chain = LLMChain(llm=langchain_llm, prompt=cheating_behavior_prompt)
-
-# Flagging mechanism
 
 
 def analyze_transcription(transcribed_text, topics):
@@ -91,53 +88,57 @@ def analyze_transcription(transcribed_text, topics):
 
     # Check for topic discussion
     topic_result = topic_chain.run(
-        {"text": transcribed_text, "topics": ", ".join(topics)})
+        {"text": transcribed_text, "topics": topics})
     if "yes" in topic_result.lower():
         results["topic_discussion"] = topic_result
 
     # Check for suspicious cheating behavior
     cheating_result = cheating_chain.run({"text": transcribed_text})
+    print("cheating result: ", cheating_result)
     if "yes" in cheating_result.lower():
         results["cheating_behavior"] = cheating_result
 
     return results
 
-# Streamlit UI
-
 
 def main():
+    st.set_page_config(layout="wide")
     st.title("Cheating Detection in Online Assessments")
-    st.markdown(
-        """
-        Upload an audio file and a questions file to analyze whether the candidate's behavior suggests cheating.
-        """
-    )
 
-    # File inputs
-    questions_file = st.file_uploader(
-        "Upload the questions.txt file", type="txt")
-    audio_file = st.file_uploader(
-        "Upload the audio file (e.g., test.mp3)", type=["mp3", "wav"])
+    # Single row for file uploads
+    upload_col1, upload_col2 = st.columns(2)
+    with upload_col1:
+        questions_file = st.file_uploader(
+            "Upload the questions.txt file", type="txt")
+    with upload_col2:
+        audio_file = st.file_uploader(
+            "Upload the audio file (e.g., test.mp3)", type=["mp3", "wav"])
 
+    # Only process if both files are uploaded
     if questions_file and audio_file:
-        st.write("**Processing your files...**")
+        # Two-column layout for transcription and topics
+        transcription_col, topics_col = st.columns(2)
 
-        # Load and display questions
-        questions_text = questions_file.read().decode("utf-8")
-        exam_topics = extract_topics_from_questions(questions_text)
-        st.subheader("Extracted Exam Topics")
-        st.write(exam_topics)
+        with transcription_col:
+            st.subheader("Transcribed Audio")
+            transcribed_text = load_and_transcribe(audio_file)
+            # Add scrollable text area with fixed height
+            st.text_area("Transcription", value=transcribed_text, height=300)
 
-        # Transcribe the audio
-        transcribed_text = load_and_transcribe(audio_file)
-        st.subheader("Transcribed Audio")
-        st.text(transcribed_text)
+        with topics_col:
+            st.subheader("Extracted Exam Topics")
+            questions_text = questions_file.read().decode("utf-8")
+            exam_topics = extract_topics_from_questions(questions_text)
+            # Use text_area to display topics, matching transcription layout
+            st.text_area("Topics", value=exam_topics, height=300)
+
+        # Analysis Results Section
+        st.subheader("Analysis Results")
 
         # Analyze the transcription
         analysis_results = analyze_transcription(transcribed_text, exam_topics)
 
-        # Display results
-        st.subheader("Analysis Results")
+        # Display warning flags if any
         if analysis_results["topic_discussion"]:
             st.warning(
                 "**Flagged:** The transcription discusses test-related topics.")
