@@ -1,0 +1,30 @@
+1. What does "NLP" stand for, and what is its main focus?
+2. Explain the ambiguous nature of NLP with an example.
+3. List the different types of linguistic analysis in NLP.
+4. Define corpora and its role in NLP.
+5. What is discourse analysis, and why is it important in NLP?
+6. What is sentence segmentation, and why is it a critical step in NLP?
+7. Differentiate between inflectional and derivational morphology with examples.
+8. Explain text normalization and its significance in NLP pipelines.
+9. What are finite-state transducers, and how are they used in morphological analysis?
+10. Describe the role of Hidden Markov Models (HMM) in POS tagging.
+11. What is Viterbi decoding, and how does it help in sequence labeling tasks?
+12. What are the ambiguities encountered in syntax analysis?
+13. Define Context-Free Grammar (CFG) and its importance in parsing.
+14. How does shallow parsing differ from full parsing?
+15. Explain the concept of Conditional Random Fields (CRF) and its application in syntax analysis.
+16. What are dependency grammars, and how are they applied in NLP?
+17. Define lexical semantics and its role in understanding word meanings.
+18. What is Word Sense Disambiguation (WSD), and why is it challenging?
+19. How are thesaurus-based methods used for word similarity analysis?
+20. Differentiate between Word2vec and fastText embeddings.
+21. What is the Lesk algorithm, and how does it resolve word sense ambiguities?
+22. Explain semantic role labeling with an example.
+23. What is the purpose of vector space representation in NLP?
+24. Describe the difference between unigram and bigram models.
+25. How do we evaluate language models effectively?
+26. What is Laplace smoothing, and why is it necessary?
+27. Explain the role of BERT in modern NLP applications.
+28. What is sentiment analysis, and how is it used in real-world applications?
+29. Define Named Entity Recognition (NER) and give two practical examples.
+30. What are the primary goals of Neural Machine Translation (NMT)?
